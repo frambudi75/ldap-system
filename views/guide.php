@@ -5,9 +5,12 @@
  */
 $baseDn = get_base_dn();
 $adminDn = get_admin_bind_dn();
-$ldapPort = get_ldap_port();
-$serverIp = $_SERVER['SERVER_ADDR'] ?? '127.0.0.1';
-if ($serverIp === '::1') $serverIp = '127.0.0.1';
+$serverIp = '127.0.0.1';
+if (!empty($_SERVER['HTTP_HOST'])) {
+    $serverIp = explode(':', $_SERVER['HTTP_HOST'])[0];
+} elseif (!empty($_SERVER['SERVER_ADDR']) && $_SERVER['SERVER_ADDR'] !== '::1') {
+    $serverIp = $_SERVER['SERVER_ADDR'];
+}
 ?>
 
 <main class="flex-1 bg-zinc-950 p-6 md:p-8 overflow-y-auto bg-grid-pattern">
