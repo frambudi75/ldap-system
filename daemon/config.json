@@ -1,0 +1,14 @@
+{
+  "ldap_host": "0.0.0.0",
+  "ldap_port": 389,
+  "db_host": "127.0.0.1",
+  "db_port": 3306,
+  "db_name": "ldap_server_db",
+  "db_user": "root",
+  "db_password": "",
+  "base_dn": "dc=internal,dc=net",
+  "admin_bind_dn": "cn=admin,dc=internal,dc=net",
+  "allow_anonymous_bind": true,
+  "log_to_db": true,
+  "debug": true
+}

@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # 1. Database Service (MariaDB/MySQL)
+  mysql:
+    image: mariadb:10.11
+    container_name: ldap_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:-root_secret_password}
+      MYSQL_DATABASE: ${DB_NAME:-ldap_server_db}
+      MYSQL_USER: ${DB_USER:-ldap_user}
+      MYSQL_PASSWORD: ${DB_PASS:-ldap_secret_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "${HOST_MYSQL_PORT:-3307}:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - ldap_net
+
+  # 2. LDAP RFC 4511 TCP Daemon Service
+  ldap-daemon:
+    build:
+      context: .
+      dockerfile: docker/daemon/Dockerfile
+    container_name: ldap_daemon
+    restart: unless-stopped
+    ports:
+      - "${HOST_LDAP_PORT:-389}:389"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-ldap_server_db}
+      DB_USER: ${DB_USER:-ldap_user}
+      DB_PASSWORD: ${DB_PASS:-ldap_secret_password}
+      LDAP_HOST: 0.0.0.0
+      LDAP_PORT: 389
+      BASE_DN: ${BASE_DN:-dc=internal,dc=net}
+      ADMIN_BIND_DN: ${ADMIN_BIND_DN:-cn=admin,dc=internal,dc=net}
+      ALLOW_ANONYMOUS: ${ALLOW_ANONYMOUS:-true}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - ldap_net
+
+  # 3. Web Admin Dashboard (PHP Native + Apache)
+  web:
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+    container_name: ldap_web_admin
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-ldap_server_db}
+      DB_USER: ${DB_USER:-ldap_user}
+      DB_PASS: ${DB_PASS:-ldap_secret_password}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ldap-daemon:
+        condition: service_started
+    networks:
+      - ldap_net
+
+networks:
+  ldap_net:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local

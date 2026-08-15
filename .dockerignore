@@ -1,0 +1,12 @@
+.git
+.github
+.agents
+.gemini
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.vscode
+.idea
+daemon/__pycache__
+docs
