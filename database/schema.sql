@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS `ldap_logs` (
 INSERT INTO `ldap_settings` (`setting_key`, `setting_value`, `description`) VALUES
 ('base_dn', 'dc=internal,dc=net', 'Base Distinguished Name for LDAP directory'),
 ('admin_bind_dn', 'cn=admin,dc=internal,dc=net', 'Root / Service account Bind DN'),
-('admin_password_hash', '$2y$10$w3Z0yZfT1fG6vEcfR6rD3O6OqjFmS678K7n4Wf8rK.yq0Rz5EdeQG', 'Password hash for admin (default: admin123)'),
+('admin_password_hash', '$2y$10$Tf.S.TMRUJNDphQ2Casdme7X1Ophe44VEw2klE4PBjO6/y1w181q2', 'Password hash for admin (default: admin123)'),
 ('allow_anonymous_bind', '1', '1 to allow anonymous bind, 0 to require authentication'),
 ('ldap_port', '389', 'TCP listening port for LDAP daemon'),
 ('user_ou', 'ou=users', 'Default Organizational Unit for users'),
@@ -101,9 +101,9 @@ ON DUPLICATE KEY UPDATE `description` = VALUES(`description`);
 -- Insert Initial Users (Passwords: adminpassword, password123, password123)
 -- Password hashes generated with password_hash('...', PASSWORD_BCRYPT)
 INSERT INTO `ldap_users` (`username`, `full_name`, `first_name`, `last_name`, `email`, `password_hash`, `telephone`, `department`, `ou`, `status`) VALUES
-('admin', 'System Administrator', 'System', 'Administrator', 'admin@internal.net', '$2y$10$eEomr6g52E0bF4/1oU1C6.g7eZJkRj0H07v9k2l1Xn/m8v9oK3H.y', '+62811000001', 'IT & Infrastructure', 'users', 'active'),
-('budi', 'Budi Santoso', 'Budi', 'Santoso', 'budi@internal.net', '$2y$10$uWj0v6t3XnE8Q6zO8eB9kOW8Y0bY6zO8eB9kOW8Y0bY6zO8eB9kO.', '+628123456789', 'Software Engineering', 'users', 'active'),
-('siti', 'Siti Rahma', 'Siti', 'Rahma', 'siti@internal.net', '$2y$10$uWj0v6t3XnE8Q6zO8eB9kOW8Y0bY6zO8eB9kOW8Y0bY6zO8eB9kO.', '+628129876543', 'Human Resources', 'users', 'active')
+('admin', 'System Administrator', 'System', 'Administrator', 'admin@internal.net', '$2y$10$XzD1LBTGMxoYk6cFlz3EQOmwahz015kMzKRIr61YVOp0.1Xxz6oRi', '+62811000001', 'IT & Infrastructure', 'users', 'active'),
+('budi', 'Budi Santoso', 'Budi', 'Santoso', 'budi@internal.net', '$2y$10$FzWZutht6IsodDVKBss84eL4GHI7YophTWeKwxD1N2G0woGTZW/8y', '+628123456789', 'Software Engineering', 'users', 'active'),
+('siti', 'Siti Rahma', 'Siti', 'Rahma', 'siti@internal.net', '$2y$10$FzWZutht6IsodDVKBss84eL4GHI7YophTWeKwxD1N2G0woGTZW/8y', '+628129876543', 'Human Resources', 'users', 'active')
 ON DUPLICATE KEY UPDATE `status` = VALUES(`status`);
 
 -- Assign Users to Groups
