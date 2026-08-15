@@ -306,6 +306,7 @@ if ($page === 'login') {
 
 $pageMap = [
     'dashboard' => ['file' => 'dashboard.php', 'title' => 'Dashboard Overview'],
+    'clients'   => ['file' => 'clients.php', 'title' => 'Connected Clients & Devices'],
     'users'     => ['file' => 'users.php', 'title' => 'Manajemen Pengguna'],
     'groups'    => ['file' => 'groups.php', 'title' => 'Manajemen Kelompok'],
     'settings'  => ['file' => 'settings.php', 'title' => 'Pengaturan Direktori'],
