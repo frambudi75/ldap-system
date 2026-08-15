@@ -225,273 +225,243 @@ if ($serverIp === '::1') $serverIp = '127.0.0.1';
     </div>
 </main>
 
+<?php
+$snippets = [
+    'pgina' => "===============================================================\n" .
+        "PANDUAN KONFIGURASI pGina (WINDOWS WORKSTATION LOGIN)\n" .
+        "===============================================================\n" .
+        "1. Buka pGina Configuration -> Tab 'Plugin Selection'\n" .
+        "   -> Centang plugin: [x] LDAP Authentication\n" .
+        "   -> Beri checklist pada: [x] Authentication  [x] Authorization  [x] Gateway\n\n" .
+        "2. Klik Konfigurasi pada plugin LDAP:\n" .
+        "   - LDAP Host / IP    : {$serverIp}\n" .
+        "   - LDAP Port         : {$ldapPort}\n" .
+        "   - Use SSL / TLS     : False (Disable)\n" .
+        "   - Search DN         : {$adminDn}\n" .
+        "   - Search Password   : admin123\n" .
+        "   - Search Base       : ou=users,{$baseDn}\n" .
+        "   - User Filter       : (&(objectClass=inetOrgPerson)(uid=%u))\n" .
+        "   - Group Search Base : ou=groups,{$baseDn}\n" .
+        "   - Group Filter      : (&(objectClass=posixGroup)(memberUid=%u))",
+
+    'php' => "<?php\n" .
+        "// ===============================================================\n" .
+        "// UNIVERSAL PHP LDAP AUTHENTICATION SCRIPT\n" .
+        "// ===============================================================\n" .
+        "\$ldapHost = \"ldap://{$serverIp}:{$ldapPort}\";\n" .
+        "\$conn = ldap_connect(\$ldapHost);\n\n" .
+        "ldap_set_option(\$conn, LDAP_OPT_PROTOCOL_VERSION, 3);\n" .
+        "ldap_set_option(\$conn, LDAP_OPT_REFERRALS, 0);\n\n" .
+        "\$username = \"budi\";\n" .
+        "\$password = \"password123\";\n\n" .
+        "// Step 1 & 2: Search user DN\n" .
+        "ldap_bind(\$conn, \"{$adminDn}\", \"admin123\");\n" .
+        "\$search = ldap_search(\$conn, \"{$baseDn}\", \"(uid={\$username})\");\n" .
+        "\$info = ldap_get_entries(\$conn, \$search);\n\n" .
+        "if (\$info['count'] > 0) {\n" .
+        "    \$userDn = \$info[0]['dn'];\n" .
+        "    \n" .
+        "    // Step 3: Verifikasi User Password via Bind\n" .
+        "    if (@ldap_bind(\$conn, \$userDn, \$password)) {\n" .
+        "        echo \"✓ Login Sukses sebagai: \" . \$info[0]['cn'][0] . \" (\" . \$info[0]['mail'][0] . \")\";\n" .
+        "    } else {\n" .
+        "        echo \"❌ Password Salah!\";\n" .
+        "    }\n" .
+        "} else {\n" .
+        "    echo \"❌ User Tidak Ditemukan!\";\n" .
+        "}\n\n" .
+        "ldap_unbind(\$conn);\n" .
+        "?>",
+
+    'laravel' => "# ===============================================================\n" .
+        "# LARAVEL .env CONFIGURATION (LdapRecord Package)\n" .
+        "# composer require directorytree/ldaprecord-laravel\n" .
+        "# ===============================================================\n" .
+        "LDAP_LOGGING=true\n" .
+        "LDAP_CONNECTION=default\n" .
+        "LDAP_HOST={$serverIp}\n" .
+        "LDAP_PORT={$ldapPort}\n" .
+        "LDAP_BASE_DN=\"{$baseDn}\"\n" .
+        "LDAP_USERNAME=\"{$adminDn}\"\n" .
+        "LDAP_PASSWORD=admin123\n" .
+        "LDAP_USE_SSL=false\n" .
+        "LDAP_USE_TLS=false\n" .
+        "LDAP_TIMEOUT=5\n\n" .
+        "# config/ldap.php User Model Mapping:\n" .
+        "# 'locate_users_by' => 'uid',\n" .
+        "# 'bind_users_by'   => 'distinguishedname',",
+
+    'python' => "# ===============================================================\n" .
+        "# PYTHON (ldap3) AUTHENTICATION SCRIPT\n" .
+        "# pip install ldap3\n" .
+        "# ===============================================================\n" .
+        "from ldap3 import Server, Connection, ALL, SUBTREE\n\n" .
+        "server = Server('{$serverIp}', port={$ldapPort}, get_info=ALL)\n\n" .
+        "# 1. Search User DN via Admin Connection\n" .
+        "admin_conn = Connection(server, '{$adminDn}', 'admin123', auto_bind=True)\n" .
+        "admin_conn.search('{$baseDn}', '(uid=budi)', search_scope=SUBTREE, attributes=['cn', 'mail', 'memberOf'])\n\n" .
+        "if len(admin_conn.entries) > 0:\n" .
+        "    user_entry = admin_conn.entries[0]\n" .
+        "    user_dn = user_entry.entry_dn\n" .
+        "    \n" .
+        "    # 2. Verify User Password\n" .
+        "    user_conn = Connection(server, user_dn, 'password123')\n" .
+        "    if user_conn.bind():\n" .
+        "        print(f\"✓ Login Berhasil: {user_entry.cn} ({user_entry.mail})\")\n" .
+        "    else:\n" .
+        "        print(\"❌ Password Salah!\")\n" .
+        "else:\n" .
+        "    print(\"❌ User tidak ditemukan!\")",
+
+    'nodejs' => "// ===============================================================\n" .
+        "// NODE.JS (ldapjs) AUTHENTICATION SCRIPT\n" .
+        "// npm install ldapjs\n" .
+        "// ===============================================================\n" .
+        "const ldap = require('ldapjs');\n\n" .
+        "const client = ldap.createClient({\n" .
+        "  url: 'ldap://{$serverIp}:{$ldapPort}'\n" .
+        "});\n\n" .
+        "const username = 'budi';\n" .
+        "const password = 'password123';\n\n" .
+        "// Step 1: Admin bind to search DN\n" .
+        "client.bind('{$adminDn}', 'admin123', (err) => {\n" .
+        "  if (err) return console.error('Admin bind failed:', err);\n\n" .
+        "  client.search('{$baseDn}', { filter: `(uid=\${username})`, scope: 'sub' }, (err, res) => {\n" .
+        "    let userDn = null;\n" .
+        "    res.on('searchEntry', (entry) => { userDn = entry.objectName; });\n" .
+        "    res.on('end', () => {\n" .
+        "      if (!userDn) return console.log('User not found');\n" .
+        "      \n" .
+        "      // Step 2: Auth user\n" .
+        "      const userClient = ldap.createClient({ url: 'ldap://{$serverIp}:{$ldapPort}' });\n" .
+        "      userClient.bind(userDn, password, (authErr) => {\n" .
+        "        if (!authErr) console.log('✓ Login Berhasil sebagai:', userDn);\n" .
+        "        else console.log('❌ Password salah');\n" .
+        "      });\n" .
+        "    });\n" .
+        "  });\n" .
+        "});",
+
+    'golang' => "// ===============================================================\n" .
+        "// GO (GOLANG) LDAP AUTHENTICATION\n" .
+        "// go get github.com/go-ldap/ldap/v3\n" .
+        "// ===============================================================\n" .
+        "package main\n\n" .
+        "import (\n" .
+        "\t\"fmt\"\n" .
+        "\t\"log\"\n" .
+        "\t\"github.com/go-ldap/ldap/v3\"\n" .
+        ")\n\n" .
+        "func main() {\n" .
+        "\tl, err := ldap.DialURL(\"ldap://{$serverIp}:{$ldapPort}\")\n" .
+        "\tif err != nil { log.Fatal(err) }\n" .
+        "\tdefer l.Close()\n\n" .
+        "\t// 1. Admin Bind & Search\n" .
+        "\terr = l.Bind(\"{$adminDn}\", \"admin123\")\n" .
+        "\tif err != nil { log.Fatal(\"Admin bind failed:\", err) }\n\n" .
+        "\tsr, err := l.Search(ldap.NewSearchRequest(\n" .
+        "\t\t\"{$baseDn}\",\n" .
+        "\t\tldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,\n" .
+        "\t\t\"(&(objectClass=inetOrgPerson)(uid=budi))\",\n" .
+        "\t\t[]string{\"dn\", \"cn\", \"mail\"},\n" .
+        "\t\tnil,\n" .
+        "\t))\n" .
+        "\tif err != nil || len(sr.Entries) == 0 {\n" .
+        "\t\tlog.Fatal(\"User not found\")\n" .
+        "\t}\n\n" .
+        "\tuserDN := sr.Entries[0].DN\n\n" .
+        "\t// 2. User Bind Test\n" .
+        "\terr = l.Bind(userDN, \"password123\")\n" .
+        "\tif err == nil {\n" .
+        "\t\tfmt.Printf(\"✓ Login Berhasil: %s\\n\", sr.Entries[0].GetAttributeValue(\"cn\"))\n" .
+        "\t} else {\n" .
+        "\t\tfmt.Println(\"❌ Password salah\")\n" .
+        "\t}\n" .
+        "}",
+
+    'nextcloud' => "===============================================================\n" .
+        "PENGATURAN NEXTCLOUD / OWNCLOUD (LDAP Backend App)\n" .
+        "===============================================================\n" .
+        "Tab 1: Server\n" .
+        "- Host          : {$serverIp}\n" .
+        "- Port          : {$ldapPort}\n" .
+        "- User DN       : {$adminDn}\n" .
+        "- Password      : admin123\n" .
+        "- Base DN       : {$baseDn}\n\n" .
+        "Tab 2: Users\n" .
+        "- objectClass   : inetOrgPerson\n\n" .
+        "Tab 3: Login Attributes\n" .
+        "- LDAP Username : uid\n" .
+        "- (Atau centang opsi: uid, mail)\n\n" .
+        "Tab 4: Groups\n" .
+        "- objectClass   : posixGroup",
+
+    'grafana' => "###############################################################\n" .
+        "# GRAFANA / PORTAINER (ldap.toml)\n" .
+        "###############################################################\n" .
+        "[[servers]]\n" .
+        "host = \"{$serverIp}\"\n" .
+        "port = {$ldapPort}\n" .
+        "use_ssl = false\n" .
+        "start_tls = false\n" .
+        "bind_dn = \"{$adminDn}\"\n" .
+        "bind_password = \"admin123\"\n" .
+        "search_filter = \"(uid=%s)\"\n" .
+        "search_base_dns = [\"ou=users,{$baseDn}\"]\n\n" .
+        "[servers.attributes]\n" .
+        "name = \"givenName\"\n" .
+        "surname = \"sn\"\n" .
+        "username = \"uid\"\n" .
+        "member_of = \"memberOf\"\n" .
+        "email = \"mail\"\n\n" .
+        "[[servers.group_mappings]]\n" .
+        "group_dn = \"cn=Administrators,ou=groups,{$baseDn}\"\n" .
+        "org_role = \"Admin\"",
+
+    'gitlab' => "# ===============================================================\n" .
+        "# GITLAB (/etc/gitlab/gitlab.rb)\n" .
+        "# ===============================================================\n" .
+        "gitlab_rails['ldap_enabled'] = true\n" .
+        "gitlab_rails['ldap_servers'] = {\n" .
+        "  'main' => {\n" .
+        "    'label' => 'Internal LDAP',\n" .
+        "    'host' => '{$serverIp}',\n" .
+        "    'port' => {$ldapPort},\n" .
+        "    'uid' => 'uid',\n" .
+        "    'bind_dn' => '{$adminDn}',\n" .
+        "    'password' => 'admin123',\n" .
+        "    'encryption' => 'plain',\n" .
+        "    'base' => 'ou=users,{$baseDn}',\n" .
+        "    'user_filter' => '(objectClass=inetOrgPerson)'\n" .
+        "  }\n" .
+        "}",
+
+    'mikrotik' => "###############################################################\n" .
+        "# MIKROTIK ROUTEROS (User Manager / Hotspot / PPP LDAP)\n" .
+        "###############################################################\n" .
+        "/user-manager/router\n" .
+        "add address={$serverIp} port={$ldapPort}\n\n" .
+        "/radius\n" .
+        "# Jika bridging via RADIUS-to-LDAP atau direct AAA\n" .
+        "# Base DN    : ou=users,{$baseDn}\n" .
+        "# Bind DN    : {$adminDn}\n" .
+        "# Secret     : admin123\n" .
+        "# Attribute  : uid",
+
+    'cli' => "# ===============================================================\n" .
+        "# COMMAND LINE TESTING (Linux / macOS / Windows bash)\n" .
+        "# ===============================================================\n\n" .
+        "# 1. Anonymous / Admin Search Query:\n" .
+        "ldapsearch -x -H ldap://{$serverIp}:{$ldapPort} -b \"{$baseDn}\" \"(uid=budi)\"\n\n" .
+        "# 2. Authenticated Search with Admin Bind:\n" .
+        "ldapsearch -x -H ldap://{$serverIp}:{$ldapPort} -D \"{$adminDn}\" -w admin123 -b \"{$baseDn}\" \"(objectClass=*)\"\n\n" .
+        "# 3. Test Direct User Password Bind:\n" .
+        "ldapwhoami -x -H ldap://{$serverIp}:{$ldapPort} -D \"uid=budi,ou=users,{$baseDn}\" -w password123"
+];
+?>
+
 <script>
-const baseDn = "<?= addslashes($baseDn) ?>";
-const adminDn = "<?= addslashes($adminDn) ?>";
-const ldapPort = "<?= $ldapPort ?>";
-const serverIp = "<?= $serverIp ?>";
-
-const snippets = {
-    pgina: `===============================================================
-PANDUAN KONFIGURASI pGina (WINDOWS WORKSTATION LOGIN)
-===============================================================
-1. Buka pGina Configuration -> Tab 'Plugin Selection'
-   -> Centang plugin: [x] LDAP Authentication
-   -> Beri checklist pada: [x] Authentication  [x] Authorization  [x] Gateway
-
-2. Klik Konfigurasi pada plugin LDAP:
-   - LDAP Host / IP  : ${serverIp}
-   - LDAP Port       : ${ldapPort}
-   - Use SSL / TLS   : False (Disable)
-   - Search DN       : ${adminDn}
-   - Search Password : admin123
-   - Search Base     : ou=users,${baseDn}
-   - User Filter     : (&(objectClass=inetOrgPerson)(uid=%u))
-   - Group Search Base : ou=groups,${baseDn}
-   - Group Filter    : (&(objectClass=posixGroup)(memberUid=%u))`,
-
-    php: `<?php
-// ===============================================================
-// UNIVERSAL PHP LDAP AUTHENTICATION SCRIPT
-// ===============================================================
-$ldapHost = "ldap://${serverIp}:${ldapPort}";
-$conn = ldap_connect($ldapHost);
-
-ldap_set_option($conn, LDAP_OPT_PROTOCOL_VERSION, 3);
-ldap_set_option($conn, LDAP_OPT_REFERRALS, 0);
-
-$username = "budi";
-$password = "password123";
-
-// Step 1 & 2: Search user DN
-ldap_bind($conn, "${adminDn}", "admin123");
-$search = ldap_search($conn, "${baseDn}", "(uid={$username})");
-$info = ldap_get_entries($conn, $search);
-
-if ($info['count'] > 0) {
-    $userDn = $info[0]['dn'];
-    
-    // Step 3: Verifikasi User Password via Bind
-    if (@ldap_bind($conn, $userDn, $password)) {
-        echo "✓ Login Sukses sebagai: " . $info[0]['cn'][0] . " (" . $info[0]['mail'][0] . ")";
-    } else {
-        echo "❌ Password Salah!";
-    }
-} else {
-    echo "❌ User Tidak Ditemukan!";
-}
-
-ldap_unbind($conn);
-?>`,
-
-    laravel: `# ===============================================================
-# LARAVEL .env CONFIGURATION (LdapRecord Package)
-# composer require directorytree/ldaprecord-laravel
-# ===============================================================
-LDAP_LOGGING=true
-LDAP_CONNECTION=default
-LDAP_HOST=${serverIp}
-LDAP_PORT=${ldapPort}
-LDAP_BASE_DN="${baseDn}"
-LDAP_USERNAME="${adminDn}"
-LDAP_PASSWORD=admin123
-LDAP_USE_SSL=false
-LDAP_USE_TLS=false
-LDAP_TIMEOUT=5
-
-# config/ldap.php User Model Mapping:
-# 'locate_users_by' => 'uid',
-# 'bind_users_by'   => 'distinguishedname',`,
-
-    python: `# ===============================================================
-# PYTHON (ldap3) AUTHENTICATION SCRIPT
-# pip install ldap3
-# ===============================================================
-from ldap3 import Server, Connection, ALL, SUBTREE
-
-server = Server('${serverIp}', port=${ldapPort}, get_info=ALL)
-
-# 1. Search User DN via Admin Connection
-admin_conn = Connection(server, '${adminDn}', 'admin123', auto_bind=True)
-admin_conn.search('${baseDn}', '(uid=budi)', search_scope=SUBTREE, attributes=['cn', 'mail', 'memberOf'])
-
-if len(admin_conn.entries) > 0:
-    user_entry = admin_conn.entries[0]
-    user_dn = user_entry.entry_dn
-    
-    # 2. Verify User Password
-    user_conn = Connection(server, user_dn, 'password123')
-    if user_conn.bind():
-        print(f"✓ Login Berhasil: {user_entry.cn} ({user_entry.mail})")
-    else:
-        print("❌ Password Salah!")
-else:
-    print("❌ User tidak ditemukan!")`,
-
-    nodejs: `// ===============================================================
-// NODE.JS (ldapjs) AUTHENTICATION SCRIPT
-// npm install ldapjs
-// ===============================================================
-const ldap = require('ldapjs');
-
-const client = ldap.createClient({
-  url: 'ldap://${serverIp}:${ldapPort}'
-});
-
-const username = 'budi';
-const password = 'password123';
-
-// Step 1: Admin bind to search DN
-client.bind('${adminDn}', 'admin123', (err) => {
-  if (err) return console.error('Admin bind failed:', err);
-
-  client.search('${baseDn}', { filter: \`(uid=\${username})\`, scope: 'sub' }, (err, res) => {
-    let userDn = null;
-    res.on('searchEntry', (entry) => { userDn = entry.objectName; });
-    res.on('end', () => {
-      if (!userDn) return console.log('User not found');
-      
-      // Step 2: Auth user
-      const userClient = ldap.createClient({ url: 'ldap://${serverIp}:${ldapPort}' });
-      userClient.bind(userDn, password, (authErr) => {
-        if (!authErr) console.log('✓ Login Berhasil sebagai:', userDn);
-        else console.log('❌ Password salah');
-      });
-    });
-  });
-});`,
-
-    golang: `// ===============================================================
-// GO (GOLANG) LDAP AUTHENTICATION
-// go get github.com/go-ldap/ldap/v3
-// ===============================================================
-package main
-
-import (
-	"fmt"
-	"log"
-	"github.com/go-ldap/ldap/v3"
-)
-
-func main() {
-	l, err := ldap.DialURL("ldap://${serverIp}:${ldapPort}")
-	if err != nil { log.Fatal(err) }
-	defer l.Close()
-
-	// 1. Admin Bind & Search
-	err = l.Bind("${adminDn}", "admin123")
-	if err != nil { log.Fatal("Admin bind failed:", err) }
-
-	sr, err := l.Search(ldap.NewSearchRequest(
-		"${baseDn}",
-		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		"(&(objectClass=inetOrgPerson)(uid=budi))",
-		[]string{"dn", "cn", "mail"},
-		nil,
-	))
-	if err != nil || len(sr.Entries) == 0 {
-		log.Fatal("User not found")
-	}
-
-	userDN := sr.Entries[0].DN
-
-	// 2. User Bind Test
-	err = l.Bind(userDN, "password123")
-	if err == nil {
-		fmt.Printf("✓ Login Berhasil: %s\\n", sr.Entries[0].GetAttributeValue("cn"))
-	} else {
-		fmt.Println("❌ Password salah")
-	}
-}`,
-
-    nextcloud: `===============================================================
-PENGATURAN NEXTCLOUD / OWNCLOUD (LDAP Backend App)
-===============================================================
-Tab 1: Server
-- Host          : ${serverIp}
-- Port          : ${ldapPort}
-- User DN       : ${adminDn}
-- Password      : admin123
-- Base DN       : ${baseDn}
-
-Tab 2: Users
-- objectClass   : inetOrgPerson
-
-Tab 3: Login Attributes
-- LDAP Username : uid
-- (Atau centang opsi: uid, mail)
-
-Tab 4: Groups
-- objectClass   : posixGroup`,
-
-    grafana: `###############################################################
-# GRAFANA / PORTAINER (ldap.toml)
-###############################################################
-[[servers]]
-host = "${serverIp}"
-port = ${ldapPort}
-use_ssl = false
-start_tls = false
-bind_dn = "${adminDn}"
-bind_password = "admin123"
-search_filter = "(uid=%s)"
-search_base_dns = ["ou=users,${baseDn}"]
-
-[servers.attributes]
-name = "givenName"
-surname = "sn"
-username = "uid"
-member_of = "memberOf"
-email = "mail"
-
-[[servers.group_mappings]]
-group_dn = "cn=Administrators,ou=groups,${baseDn}"
-org_role = "Admin"`,
-
-    gitlab: `# ===============================================================
-# GITLAB (/etc/gitlab/gitlab.rb)
-# ===============================================================
-gitlab_rails['ldap_enabled'] = true
-gitlab_rails['ldap_servers'] = {
-  'main' => {
-    'label' => 'Internal LDAP',
-    'host' => '${serverIp}',
-    'port' => ${ldapPort},
-    'uid' => 'uid',
-    'bind_dn' => '${adminDn}',
-    'password' => 'admin123',
-    'encryption' => 'plain',
-    'base' => 'ou=users,${baseDn}',
-    'user_filter' => '(objectClass=inetOrgPerson)'
-  }
-}`,
-
-    mikrotik: `###############################################################
-# MIKROTIK ROUTEROS (User Manager / Hotspot / PPP LDAP)
-###############################################################
-/user-manager/router
-add address=${serverIp} port=${ldapPort}
-
-/radius
-# Jika bridging via RADIUS-to-LDAP atau direct AAA
-# Base DN    : ou=users,${baseDn}
-# Bind DN    : ${adminDn}
-# Secret     : admin123
-# Attribute  : uid`,
-
-    cli: `# ===============================================================
-# COMMAND LINE TESTING (Linux / macOS / Windows bash)
-# ===============================================================
-
-# 1. Anonymous / Admin Search Query:
-ldapsearch -x -H ldap://${serverIp}:${ldapPort} -b "${baseDn}" "(uid=budi)"
-
-# 2. Authenticated Search with Admin Bind:
-ldapsearch -x -H ldap://${serverIp}:${ldapPort} -D "${adminDn}" -w admin123 -b "${baseDn}" "(objectClass=*)"
-
-# 3. Test Direct User Password Bind:
-ldapwhoami -x -H ldap://${serverIp}:${ldapPort} -D "uid=budi,ou=users,${baseDn}" -w password123`
-};
+const snippets = <?= json_encode($snippets, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
 
 function renderCodeSnippet() {
     const val = document.getElementById('target-stack').value;
