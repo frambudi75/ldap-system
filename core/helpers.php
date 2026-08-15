@@ -34,7 +34,14 @@ function get_flash(): ?array {
     return null;
 }
 
-function check_ldap_daemon_status(string $host = '127.0.0.1', int $port = 389, float $timeout = 0.5): array {
+function check_ldap_daemon_status(?string $host = null, ?int $port = null, float $timeout = 0.5): array {
+    if ($host === null) {
+        $host = getenv('LDAP_HOST') ?: '127.0.0.1';
+    }
+    if ($port === null) {
+        $port = function_exists('get_ldap_port') ? get_ldap_port() : 389;
+    }
+
     $status_file = __DIR__ . '/../daemon/server_status.json';
     $meta = [];
     if (file_exists($status_file)) {
@@ -44,7 +51,18 @@ function check_ldap_daemon_status(string $host = '127.0.0.1', int $port = 389, f
         }
     }
 
+    // Try primary host (e.g. 127.0.0.1 or ldap-daemon)
     $socket = @fsockopen($host, $port, $errno, $errstr, $timeout);
+    
+    // In Docker network fallback
+    if (!is_resource($socket) && $host === '127.0.0.1') {
+        $dockerSocket = @fsockopen('ldap-daemon', $port, $errno, $errstr, $timeout);
+        if (is_resource($dockerSocket)) {
+            $socket = $dockerSocket;
+            $host = 'ldap-daemon';
+        }
+    }
+
     if (is_resource($socket)) {
         fclose($socket);
         return [
@@ -52,7 +70,7 @@ function check_ldap_daemon_status(string $host = '127.0.0.1', int $port = 389, f
             'host' => $host,
             'port' => $port,
             'meta' => $meta,
-            'message' => "LDAP Server is active on port {$port}"
+            'message' => "LDAP Server is active on {$host}:{$port}"
         ];
     }
 
