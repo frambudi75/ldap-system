@@ -109,7 +109,10 @@ $recentLogs = $pdo->query("SELECT * FROM ldap_logs ORDER BY id DESC LIMIT 8")->f
             <div class="space-y-2.5 text-xs font-mono">
                 <div class="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950 border border-zinc-850">
                     <span class="text-zinc-500">URI</span>
-                    <span class="text-emerald-400 font-bold select-all">ldap://127.0.0.1:<?= $ldapPort ?></span>
+                    <?php 
+                    $currentHost = !empty($_SERVER['HTTP_HOST']) ? explode(':', $_SERVER['HTTP_HOST'])[0] : '127.0.0.1';
+                    ?>
+                    <span class="text-emerald-400 font-bold select-all">ldap://<?= htmlspecialchars($currentHost) ?>:<?= $ldapPort ?></span>
                 </div>
                 <div class="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950 border border-zinc-850">
                     <span class="text-zinc-500">Base DN</span>
