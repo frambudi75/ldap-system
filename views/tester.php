@@ -37,8 +37,8 @@ $ldapPort = get_ldap_port();
             <form id="tester-form" class="space-y-3.5" onsubmit="executeLdapTest(event)">
                 <div class="grid grid-cols-3 gap-2.5">
                     <div class="col-span-2">
-                        <label class="block text-[10px] font-bold text-zinc-400 uppercase font-mono mb-1">Host Target</label>
-                        <input type="text" id="t-host" value="127.0.0.1" required
+                        <label class="block text-[10px] font-bold text-zinc-400 uppercase font-mono mb-1">Host Target (IP / Container / Domain)</label>
+                        <input type="text" id="t-host" value="<?= htmlspecialchars(getenv('LDAP_HOST') ?: '127.0.0.1') ?>" required
                                class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-xs font-mono text-white focus:outline-none focus:border-engine-500">
                     </div>
                     <div>

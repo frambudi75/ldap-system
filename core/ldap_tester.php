@@ -11,6 +11,19 @@ class LdapTester {
     public static function testConnection(string $host, int $port, string $bindDn, string $password, string $searchBase, string $searchFilter): array {
         $startTime = microtime(true);
 
+        // Auto-resolve localhost/127.0.0.1 to internal container host if inside Docker network
+        $envLdapHost = getenv('LDAP_HOST');
+        if (($host === '127.0.0.1' || $host === 'localhost') && $envLdapHost && $envLdapHost !== '0.0.0.0' && $envLdapHost !== '127.0.0.1') {
+            $host = $envLdapHost;
+        } elseif (($host === '127.0.0.1' || $host === 'localhost')) {
+            // Check if ldap-daemon hostname is reachable in docker network
+            $testSock = @fsockopen('ldap-daemon', $port, $e, $es, 0.3);
+            if (is_resource($testSock)) {
+                fclose($testSock);
+                $host = 'ldap-daemon';
+            }
+        }
+
         // 1. Check if PHP LDAP extension is installed
         if (function_exists('ldap_connect')) {
             return self::testViaPhpLdap($host, $port, $bindDn, $password, $searchBase, $searchFilter, $startTime);
