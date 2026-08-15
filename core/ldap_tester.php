@@ -11,6 +11,18 @@ class LdapTester {
     public static function testConnection(string $host, int $port, string $bindDn, string $password, string $searchBase, string $searchFilter): array {
         $startTime = microtime(true);
 
+        // Sanitize host: strip ldap://, ldaps://, http:// and any embedded :port
+        $host = trim($host);
+        $host = preg_replace('#^(ldap|ldaps|http|https)://#i', '', $host);
+        if (strpos($host, ':') !== false) {
+            $parts = explode(':', $host);
+            $host = $parts[0];
+            if (!empty($parts[1]) && is_numeric($parts[1])) {
+                $port = (int)$parts[1];
+            }
+        }
+        $host = trim($host, '/');
+
         // Auto-resolve localhost/127.0.0.1 to internal container host if inside Docker network
         $envLdapHost = getenv('LDAP_HOST');
         if (($host === '127.0.0.1' || $host === 'localhost') && $envLdapHost && $envLdapHost !== '0.0.0.0' && $envLdapHost !== '127.0.0.1') {
