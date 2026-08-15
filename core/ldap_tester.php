@@ -28,11 +28,15 @@ class LdapTester {
         $currentIp = !empty($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : '';
         $envLdapHost = getenv('LDAP_HOST');
 
+        // Extract root domain (e.g. minirack.my.id from auth.minirack.my.id or ldap.minirack.my.id)
+        $domainParts = explode('.', $currentDomain);
+        $rootDomain = count($domainParts) >= 2 ? implode('.', array_slice($domainParts, -2)) : $currentDomain;
+
         $isSelfHost = in_array(strtolower($host), [
             '127.0.0.1', 'localhost', '0.0.0.0', 
             strtolower($currentDomain), 
             strtolower($currentIp)
-        ]);
+        ]) || (strlen($rootDomain) > 3 && str_ends_with(strtolower($host), strtolower($rootDomain)));
 
         if ($isSelfHost && $envLdapHost && $envLdapHost !== '0.0.0.0' && $envLdapHost !== '127.0.0.1') {
             $host = $envLdapHost;
@@ -47,7 +51,16 @@ class LdapTester {
 
         // 1. Check if PHP LDAP extension is installed
         if (function_exists('ldap_connect')) {
-            return self::testViaPhpLdap($host, $port, $bindDn, $password, $searchBase, $searchFilter, $startTime);
+            $res = self::testViaPhpLdap($host, $port, $bindDn, $password, $searchBase, $searchFilter, $startTime);
+            // If failed to contact server, attempt internal docker fallback if not already tried
+            if (!$res['success'] && $res['stage'] === 'CONNECT' && $host !== 'ldap-daemon') {
+                $testSock = @fsockopen('ldap-daemon', $port, $e, $es, 0.3);
+                if (is_resource($testSock)) {
+                    fclose($testSock);
+                    $res = self::testViaPhpLdap('ldap-daemon', $port, $bindDn, $password, $searchBase, $searchFilter, $startTime);
+                }
+            }
+            return $res;
         }
 
         // 2. Direct Socket Fallback & Verification against MySQL backend
