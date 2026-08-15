@@ -23,11 +23,20 @@ class LdapTester {
         }
         $host = trim($host, '/');
 
-        // Auto-resolve localhost/127.0.0.1 to internal container host if inside Docker network
+        // Auto-resolve self-referencing hosts (own domain, own IP, localhost) to internal container host in Docker
+        $currentDomain = !empty($_SERVER['HTTP_HOST']) ? explode(':', $_SERVER['HTTP_HOST'])[0] : '';
+        $currentIp = !empty($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : '';
         $envLdapHost = getenv('LDAP_HOST');
-        if (($host === '127.0.0.1' || $host === 'localhost') && $envLdapHost && $envLdapHost !== '0.0.0.0' && $envLdapHost !== '127.0.0.1') {
+
+        $isSelfHost = in_array(strtolower($host), [
+            '127.0.0.1', 'localhost', '0.0.0.0', 
+            strtolower($currentDomain), 
+            strtolower($currentIp)
+        ]);
+
+        if ($isSelfHost && $envLdapHost && $envLdapHost !== '0.0.0.0' && $envLdapHost !== '127.0.0.1') {
             $host = $envLdapHost;
-        } elseif (($host === '127.0.0.1' || $host === 'localhost')) {
+        } elseif ($isSelfHost) {
             // Check if ldap-daemon hostname is reachable in docker network
             $testSock = @fsockopen('ldap-daemon', $port, $e, $es, 0.3);
             if (is_resource($testSock)) {
