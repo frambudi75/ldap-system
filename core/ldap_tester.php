@@ -42,7 +42,8 @@ class LdapTester {
             $host = $envLdapHost;
         } elseif ($isSelfHost) {
             // Check if ldap-daemon hostname is reachable in docker network
-            $testSock = @fsockopen('ldap-daemon', $port, $e, $es, 0.3);
+            $internalPort = (int)(getenv('LDAP_PORT') ?: 389);
+            $testSock = @fsockopen('ldap-daemon', $internalPort, $e, $es, 0.3);
             if (is_resource($testSock)) {
                 fclose($testSock);
                 $host = 'ldap-daemon';
@@ -54,10 +55,11 @@ class LdapTester {
             $res = self::testViaPhpLdap($host, $port, $bindDn, $password, $searchBase, $searchFilter, $startTime);
             // If failed to contact server, attempt internal docker fallback if not already tried
             if (!$res['success'] && $res['stage'] === 'CONNECT' && $host !== 'ldap-daemon') {
-                $testSock = @fsockopen('ldap-daemon', $port, $e, $es, 0.3);
+                $internalPort = (int)(getenv('LDAP_PORT') ?: 389);
+            $testSock = @fsockopen('ldap-daemon', $internalPort, $e, $es, 0.3);
                 if (is_resource($testSock)) {
                     fclose($testSock);
-                    $res = self::testViaPhpLdap('ldap-daemon', $port, $bindDn, $password, $searchBase, $searchFilter, $startTime);
+                    $res = self::testViaPhpLdap('ldap-daemon', $internalPort, $bindDn, $password, $searchBase, $searchFilter, $startTime);
                 }
             }
             return $res;

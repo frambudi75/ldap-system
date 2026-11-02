@@ -8,7 +8,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../core/helpers.php';
 
 $ldapPort = get_ldap_port();
-$daemonStatus = check_ldap_daemon_status('127.0.0.1', $ldapPort);
+$daemonStatus = check_ldap_daemon_status();
 ?>
 <!DOCTYPE html>
 <html lang="id" class="dark">

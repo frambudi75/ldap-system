@@ -35,11 +35,35 @@ function get_flash(): ?array {
 }
 
 function check_ldap_daemon_status(?string $host = null, ?int $port = null, float $timeout = 0.5): array {
-    if ($host === null) {
-        $host = getenv('LDAP_HOST') ?: '127.0.0.1';
+    $displayPort = function_exists('get_ldap_port') ? get_ldap_port() : 389;
+    $internalHost = getenv('LDAP_HOST') ?: 'ldap-daemon';
+    $internalPort = (int)(getenv('LDAP_PORT') ?: 389);
+
+    // Candidates to test
+    $targets = [];
+    if ($host !== null && $port !== null) {
+        $targets[] = [$host, $port];
     }
-    if ($port === null) {
-        $port = (int)(getenv('LDAP_PORT') ?: (function_exists('get_ldap_port') ? get_ldap_port() : 389));
+    // Docker internal network
+    $targets[] = [$internalHost, $internalPort];
+    $targets[] = ['ldap-daemon', 389];
+    $targets[] = ['127.0.0.1', $internalPort];
+    if ($displayPort !== $internalPort) {
+        $targets[] = ['127.0.0.1', $displayPort];
+    }
+
+    $socket = false;
+    $connectedHost = $host ?: $internalHost;
+    $connectedPort = $port ?: $internalPort;
+
+    foreach ($targets as [$tHost, $tPort]) {
+        $sock = @fsockopen($tHost, $tPort, $errno, $errstr, $timeout);
+        if (is_resource($sock)) {
+            $socket = $sock;
+            $connectedHost = $tHost;
+            $connectedPort = $tPort;
+            break;
+        }
     }
 
     $status_file = __DIR__ . '/../daemon/server_status.json';
@@ -51,35 +75,23 @@ function check_ldap_daemon_status(?string $host = null, ?int $port = null, float
         }
     }
 
-    // Try primary host (e.g. 127.0.0.1 or ldap-daemon)
-    $socket = @fsockopen($host, $port, $errno, $errstr, $timeout);
-    
-    // In Docker network fallback
-    if (!is_resource($socket) && $host === '127.0.0.1') {
-        $dockerSocket = @fsockopen('ldap-daemon', $port, $errno, $errstr, $timeout);
-        if (is_resource($dockerSocket)) {
-            $socket = $dockerSocket;
-            $host = 'ldap-daemon';
-        }
-    }
-
     if (is_resource($socket)) {
         fclose($socket);
         return [
             'online' => true,
-            'host' => $host,
-            'port' => function_exists('get_ldap_port') ? get_ldap_port() : $port,
+            'host' => $connectedHost,
+            'port' => $displayPort,
             'meta' => $meta,
-            'message' => "LDAP Server is active on {$host}:{$port}"
+            'message' => "LDAP Server is active on {$connectedHost}:{$displayPort}"
         ];
     }
 
     return [
         'online' => false,
-        'host' => $host,
-        'port' => $port,
+        'host' => $host ?: $internalHost,
+        'port' => $displayPort,
         'meta' => $meta,
-        'message' => "LDAP Server is stopped or port {$port} unreachable ({$errstr})"
+        'message' => "LDAP Server is stopped or port unreachable"
     ];
 }
 

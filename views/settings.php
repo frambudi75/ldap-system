@@ -11,7 +11,7 @@ foreach ($settingsRows as $row) {
 }
 
 $ldapPort = get_ldap_port();
-$daemonStatus = check_ldap_daemon_status('127.0.0.1', $ldapPort);
+$daemonStatus = check_ldap_daemon_status();
 ?>
 
 <main class="flex-1 bg-zinc-950 p-6 md:p-8 overflow-y-auto bg-grid-pattern">
