@@ -108,7 +108,7 @@ $daemonStatus = check_ldap_daemon_status('127.0.0.1', $ldapPort);
                         <div class="flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full <?= $daemonStatus['online'] ? 'bg-emerald-400 animate-ping' : 'bg-rose-400' ?>"></span>
                             <span class="text-xs font-bold font-mono <?= $daemonStatus['online'] ? 'text-emerald-400' : 'text-rose-400' ?>">
-                                <?= $daemonStatus['online'] ? 'LISTENING (389/TCP)' : 'DAEMON_OFFLINE' ?>
+                                <?= $daemonStatus['online'] ? "LISTENING ({$ldapPort}/TCP)" : 'DAEMON_OFFLINE' ?>
                             </span>
                         </div>
                     </div>
@@ -133,7 +133,7 @@ $daemonStatus = check_ldap_daemon_status('127.0.0.1', $ldapPort);
                         <span class="text-[10px] text-zinc-500">ASN.1 / BER</span>
                     </div>
                     <div class="p-4 space-y-1.5 text-[11px] text-zinc-300">
-                        <div class="text-zinc-500">00:00:01 &gt; TCP SYN [127.0.0.1:389] connected</div>
+                        <div class="text-zinc-500">00:00:01 &gt; TCP SYN [127.0.0.1:<?= $ldapPort ?>] connected</div>
                         <div class="text-emerald-400">&gt; BIND_REQ: dn="cn=admin,<?= htmlspecialchars(get_base_dn()) ?>" [PASS]</div>
                         <div class="text-engine-400">&gt; SEARCH_REQ: base="ou=users,<?= htmlspecialchars(get_base_dn()) ?>" filter="(uid=*)"</div>
                         <div class="text-zinc-400">&gt; SEARCH_RES_ENTRY: found 3 posixAccount entries</div>
@@ -171,7 +171,7 @@ $daemonStatus = check_ldap_daemon_status('127.0.0.1', $ldapPort);
                         Username
                     </label>
                     <div class="relative">
-                        <input type="text" name="username" id="in-username" required autofocus value="admin"
+                        <input type="text" name="username" id="in-username" required autofocus value="" placeholder="Masukkan username" autocomplete="username"
                                class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-white text-xs font-mono focus:outline-none focus:border-engine-500 focus:ring-1 focus:ring-engine-500 transition-all">
                     </div>
                 </div>
@@ -186,7 +186,7 @@ $daemonStatus = check_ldap_daemon_status('127.0.0.1', $ldapPort);
                         </button>
                     </div>
                     <div class="relative">
-                        <input type="password" name="password" id="in-password" required value="adminpassword"
+                        <input type="password" name="password" id="in-password" required value="" placeholder="Masukkan password" autocomplete="current-password"
                                class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-white text-xs font-mono focus:outline-none focus:border-engine-500 focus:ring-1 focus:ring-engine-500 transition-all">
                     </div>
                 </div>
@@ -199,14 +199,6 @@ $daemonStatus = check_ldap_daemon_status('127.0.0.1', $ldapPort);
                     </button>
                 </div>
             </form>
-
-            <!-- Quick Auto-Fill Credentials Badge -->
-            <div class="mt-6 pt-5 border-t border-zinc-900 text-center">
-                <div class="text-[11px] text-zinc-400 mb-2">Preset Akun Default:</div>
-                <button type="button" onclick="fillAdmin()" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-[11px] font-mono text-zinc-300 transition-colors">
-                    <span class="text-engine-400">admin</span> / <span class="text-zinc-500">adminpassword</span>
-                </button>
-            </div>
         </div>
     </div>
 
@@ -221,11 +213,6 @@ $daemonStatus = check_ldap_daemon_status('127.0.0.1', $ldapPort);
                 pwd.type = 'password';
                 txt.innerText = 'Show';
             }
-        }
-
-        function fillAdmin() {
-            document.getElementById('in-username').value = 'admin';
-            document.getElementById('in-password').value = 'adminpassword';
         }
     </script>
 </body>

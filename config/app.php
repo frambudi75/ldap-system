@@ -48,5 +48,9 @@ function get_admin_bind_dn(): string {
 }
 
 function get_ldap_port(): int {
+    $envHostPort = getenv('HOST_LDAP_PORT') ?: getenv('EXPOSED_LDAP_PORT');
+    if ($envHostPort !== false && is_numeric($envHostPort)) {
+        return (int) $envHostPort;
+    }
     return (int) get_setting('ldap_port', '389');
 }

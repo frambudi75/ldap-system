@@ -119,7 +119,7 @@ function detectClientApp(array $client): array {
         <div class="tactile-card rounded-2xl p-5">
             <div class="flex items-center justify-between text-xs text-zinc-400 mb-2">
                 <span class="font-medium font-mono text-[11px]">PROTOCOL_DAEMON</span>
-                <span class="text-emerald-400 font-mono text-[10px]">TCP Port 389</span>
+                <span class="text-emerald-400 font-mono text-[10px]">TCP Port <?= $ldapPort ?></span>
             </div>
             <div class="flex items-baseline gap-2">
                 <span class="text-2xl font-bold text-white tracking-tight">Active Listener</span>

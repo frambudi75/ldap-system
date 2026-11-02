@@ -29,14 +29,29 @@ class Auth {
 
             $valid = password_verify($password, $user['password_hash']);
 
+            // If user is admin and password check on user table failed, check ldap_settings
+            if (!$valid && $username === 'admin') {
+                $stmtSetting = $pdo->prepare("SELECT setting_value FROM ldap_settings WHERE setting_key = 'admin_password_hash' LIMIT 1");
+                $stmtSetting->execute();
+                $settingHash = $stmtSetting->fetchColumn();
+                if ($settingHash && password_verify($password, $settingHash)) {
+                    $valid = true;
+                }
+            }
+
             // Fallback for default seeded admin account if hash was legacy
             if (!$valid && $username === 'admin' && in_array($password, ['adminpassword', 'admin123'])) {
-                $newHash = password_hash($password, PASSWORD_BCRYPT);
-                $pdo->prepare("UPDATE ldap_users SET password_hash = ? WHERE id = ?")->execute([$newHash, $user['id']]);
                 $valid = true;
             }
 
             if ($valid) {
+                // If admin, ensure both ldap_users and ldap_settings stay in sync with this valid password
+                if ($username === 'admin') {
+                    $newHash = password_hash($password, PASSWORD_BCRYPT);
+                    $pdo->prepare("INSERT INTO ldap_settings (setting_key, setting_value) VALUES ('admin_password_hash', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)")->execute([$newHash]);
+                    $pdo->prepare("UPDATE ldap_users SET password_hash = ? WHERE id = ?")->execute([$newHash, $user['id']]);
+                }
+
                 session_regenerate_id(true);
                 $_SESSION['admin_logged_in'] = true;
                 $_SESSION['admin_user'] = [
@@ -49,14 +64,14 @@ class Auth {
             }
         }
 
-        // 2. Check admin bind setting fallback
+        // 2. Check admin bind setting fallback (if user table doesn't have admin)
         if ($username === 'admin') {
             $stmt = $pdo->prepare("SELECT setting_value FROM ldap_settings WHERE setting_key = 'admin_password_hash' LIMIT 1");
             $stmt->execute();
             $adminSetting = $stmt->fetch();
             
             $valid = false;
-            if ($adminSetting && password_verify($password, $adminSetting['setting_value'])) {
+            if ($adminSetting && !empty($adminSetting['setting_value']) && password_verify($password, $adminSetting['setting_value'])) {
                 $valid = true;
             } elseif (in_array($password, ['adminpassword', 'admin123'])) {
                 $valid = true;

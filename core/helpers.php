@@ -39,7 +39,7 @@ function check_ldap_daemon_status(?string $host = null, ?int $port = null, float
         $host = getenv('LDAP_HOST') ?: '127.0.0.1';
     }
     if ($port === null) {
-        $port = function_exists('get_ldap_port') ? get_ldap_port() : 389;
+        $port = (int)(getenv('LDAP_PORT') ?: (function_exists('get_ldap_port') ? get_ldap_port() : 389));
     }
 
     $status_file = __DIR__ . '/../daemon/server_status.json';
@@ -68,7 +68,7 @@ function check_ldap_daemon_status(?string $host = null, ?int $port = null, float
         return [
             'online' => true,
             'host' => $host,
-            'port' => $port,
+            'port' => function_exists('get_ldap_port') ? get_ldap_port() : $port,
             'meta' => $meta,
             'message' => "LDAP Server is active on {$host}:{$port}"
         ];

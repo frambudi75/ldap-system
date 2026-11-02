@@ -24,7 +24,7 @@ $recentLogs = $pdo->query("SELECT * FROM ldap_logs ORDER BY id DESC LIMIT 8")->f
                 <h1 class="text-xl font-extrabold text-white tracking-tight">Directory Telemetry</h1>
                 <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-zinc-850 text-zinc-300 border border-zinc-750">LIVE</span>
             </div>
-            <p class="text-xs text-zinc-400">Pusat kendali direktori LDAP, pemantauan soket TCP 389, dan audit autentikasi</p>
+            <p class="text-xs text-zinc-400">Pusat kendali direktori LDAP, pemantauan soket TCP <?= $ldapPort ?>, dan audit autentikasi</p>
         </div>
         <div class="flex items-center gap-2.5">
             <a href="<?= BASE_URL ?>/index.php?page=tester" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 text-xs font-bold text-zinc-200 transition-all">
@@ -72,7 +72,7 @@ $recentLogs = $pdo->query("SELECT * FROM ldap_logs ORDER BY id DESC LIMIT 8")->f
         <div class="tactile-card rounded-2xl p-4 md:p-5">
             <div class="flex items-center justify-between text-xs text-zinc-400 mb-3">
                 <span class="font-medium font-mono text-[11px]">24H_OPERATIONS</span>
-                <span class="text-zinc-500 font-mono text-[10px]">TCP Port 389</span>
+                <span class="text-zinc-500 font-mono text-[10px]">TCP Port <?= $ldapPort ?></span>
             </div>
             <div class="flex items-baseline gap-2 mb-2">
                 <span class="text-3xl font-extrabold text-white tracking-tight"><?= $todayLogs ?></span>
@@ -89,7 +89,7 @@ $recentLogs = $pdo->query("SELECT * FROM ldap_logs ORDER BY id DESC LIMIT 8")->f
             </div>
             <div class="flex items-baseline gap-2 mb-2">
                 <span class="text-xl font-bold font-mono <?= $daemonStatus['online'] ? 'text-emerald-400' : 'text-rose-400' ?>">
-                    <?= $daemonStatus['online'] ? 'RUNNING :389' : 'OFFLINE' ?>
+                    <?= $daemonStatus['online'] ? "RUNNING :{$ldapPort}" : 'OFFLINE' ?>
                 </span>
             </div>
             <div class="text-[10px] font-mono text-zinc-400 truncate" title="<?= htmlspecialchars(get_base_dn()) ?>">

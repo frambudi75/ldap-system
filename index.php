@@ -147,6 +147,12 @@ if ($action === 'reset_user_password' && $_SERVER['REQUEST_METHOD'] === 'POST') 
         $hash = password_hash($newPwd, PASSWORD_BCRYPT);
         $stmt = $pdo->prepare("UPDATE ldap_users SET password_hash = ? WHERE id = ?");
         $stmt->execute([$hash, $userId]);
+
+        $chkStmt = $pdo->prepare("SELECT username FROM ldap_users WHERE id = ?");
+        $chkStmt->execute([$userId]);
+        if ($chkStmt->fetchColumn() === 'admin') {
+            $pdo->prepare("INSERT INTO ldap_settings (setting_key, setting_value) VALUES ('admin_password_hash', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)")->execute([$hash]);
+        }
         set_flash('success', "Password pengguna berhasil diubah.");
     } else {
         set_flash('danger', "Password baru tidak boleh kosong.");
@@ -274,6 +280,7 @@ if ($action === 'save_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($adminPwd)) {
         $hash = password_hash($adminPwd, PASSWORD_BCRYPT);
         $stmt->execute(['admin_password_hash', $hash]);
+        $pdo->prepare("UPDATE ldap_users SET password_hash = ? WHERE username = 'admin'")->execute([$hash]);
     }
 
     set_flash('success', "Pengaturan direktori LDAP berhasil disimpan.");
